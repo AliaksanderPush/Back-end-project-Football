@@ -7,27 +7,23 @@ const bcrypt = require("bcrypt");
 const ApiError = require("../exceptions/api-error");
 
 class UserService {
-  async registration(email, password) {
+  async registration(userName, email, password) {
     const candidate = await UserModel.findOne({ email });
-    if (candidate) {
-      throw ApiError.BadRequest(`The user with this ${email} already exists`);
+    const candidateName = await UserModel.findOne({ userName });
+    if (candidate || candidateName) {
+      throw ApiError.BadRequest(
+        `The user with this ${email} or ${userName} already exists`
+      );
     } else {
       const hashPassword = await bcrypt.hash(password, 3);
-      // const activationLink = uuid.v4();
       const user = await UserModel.create({
+        userName,
         email,
         password: hashPassword,
-        // activationLink,
       });
       user.isActivated = true;
       await user.save();
 
-      /*
-      await mailService.sendActivationMail(
-        email,
-        `http://Localhost:5000/api/activate/${activationLink}`
-      );
-        */
       const userDto = new UserDto(user);
       const tokens = tokenService.generateTokens({ ...userDto });
       await tokenService.saveToken(userDto.id, tokens.refreshToken);
@@ -35,11 +31,6 @@ class UserService {
     }
   }
   async activate() {
-    //activationLink
-    // const user = await UserModel.findOne(activationLink);
-    // if (!user) {
-    //  throw new Error("Неккоректная ссылка активации");
-    // }
     user.isActivated = true;
     await user.save();
   }
@@ -78,11 +69,6 @@ class UserService {
     const tokens = tokenService.generateTokens({ ...userDto });
     await tokenService.saveToken(userDto.id, tokens.refreshToken);
     return { ...tokens, user: userDto };
-  }
-
-  async getAllUsers() {
-    const users = await UserModel.find();
-    return users;
   }
 }
 module.exports = new UserService();

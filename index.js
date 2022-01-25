@@ -13,10 +13,10 @@ app.use(cookieParser());
 app.use(
   cors({
     credentials: true,
-    origin: "http://Localhost:3000",
+    origin: "http://localhost:3000",
   })
 );
-app.use("/api", router);
+app.use("/singUp", router);
 app.use(errorMiddleware);
 
 const start = async () => {
